@@ -153,5 +153,12 @@ wget -q https://github.com/tylerdotrar/SigmaPotato/releases/latest/download/Sigm
 
 echo -e "\n${GREEN}[✓] Setup complete!${NC}"
 echo -e "${GREEN}[*] All tools have been downloaded to /home/kali/transfers${NC}"
+
+# Cleanup any unnecessary files
+echo -e "${YELLOW}[*] Cleaning up unnecessary files...${NC}"
+cd /home/kali/transfers
+rm -f kiwi_passwords.yar mimicom.idl JuicyPotatoNG.zip 2>/dev/null || true
+echo -e "${GREEN}[✓] Cleanup complete${NC}"
+
 echo -e "${YELLOW}[*] Remember to start neo4j before using BloodHound: sudo neo4j start${NC}"
 echo -e "${YELLOW}[*] Default neo4j credentials are neo4j:neo4j (you'll be prompted to change on first login)${NC}\n"
