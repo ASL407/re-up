@@ -51,6 +51,10 @@ echo -e "${NC}\n"
 
 echo -e "${GREEN}[*] Starting Kali Linux environment setup...${NC}\n"
 
+# Fix display resolution
+echo -e "${YELLOW}[+] Setting display to auto-size...${NC}"
+xrandr --output Virtual-1 --auto 2>/dev/null || echo -e "${YELLOW}[!] Display auto-size not available, skipping...${NC}"
+
 # Create transfers directory
 echo -e "${YELLOW}[+] Creating /home/kali/transfers directory...${NC}"
 mkdir -p /home/kali/transfers
@@ -60,6 +64,20 @@ cd /home/kali/transfers
 echo -e "${YELLOW}[+] Installing SecLists...${NC}"
 sudo apt update
 sudo apt install -y seclists
+
+# Install KeePass2
+echo -e "${YELLOW}[+] Installing KeePass2...${NC}"
+sudo apt install -y keepass2
+echo -e "${GREEN}[✓] KeePass2 installed${NC}"
+
+# Unzip RockYou wordlist
+echo -e "${YELLOW}[+] Unzipping RockYou wordlist...${NC}"
+if [ -f /usr/share/wordlists/rockyou.txt.gz ]; then
+    sudo gunzip /usr/share/wordlists/rockyou.txt.gz
+    echo -e "${GREEN}[✓] RockYou wordlist unzipped${NC}"
+else
+    echo -e "${YELLOW}[!] RockYou already unzipped or not found${NC}"
+fi
 
 # Download and install Ligolo-ng
 echo -e "${YELLOW}[+] Downloading Ligolo-ng...${NC}"
@@ -97,9 +115,9 @@ fi
 
 echo -e "${GREEN}[✓] BloodHound setup complete${NC}"
 
-# Download PEASS-ng (WinPEAS & LinPEAS)
+# Download PEASS-ng (WinPEASany & LinPEAS)
 echo -e "${YELLOW}[+] Downloading WinPEAS and LinPEAS...${NC}"
-wget -q https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEASx64.exe -O /home/kali/transfers/winPEASx64.exe
+wget -q https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEASany.exe -O /home/kali/transfers/winPEASany.exe
 wget -q https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh -O /home/kali/transfers/linpeas.sh
 chmod +x /home/kali/transfers/linpeas.sh
 echo -e "${GREEN}[✓] PEASS-ng tools downloaded${NC}"
@@ -137,6 +155,11 @@ cd /home/kali/transfers
 rm -rf /tmp/juicy-download
 echo -e "${GREEN}[✓] JuicyPotatoNG downloaded${NC}"
 
+# Download JuicyPotato
+echo -e "${YELLOW}[+] Downloading JuicyPotato...${NC}"
+wget -q https://github.com/ohpe/juicy-potato/releases/latest/download/JuicyPotato.exe -O /home/kali/transfers/JuicyPotato.exe
+echo -e "${GREEN}[✓] JuicyPotato downloaded${NC}"
+
 # Download GodPotato
 echo -e "${YELLOW}[+] Downloading GodPotato...${NC}"
 wget -q https://github.com/BeichenDream/GodPotato/releases/latest/download/GodPotato-NET4.exe -O /home/kali/transfers/GodPotato.exe
@@ -151,13 +174,68 @@ echo -e "${GREEN}[✓] PrintSpoofer downloaded${NC}"
 echo -e "${YELLOW}[+] Downloading SigmaPotato...${NC}"
 wget -q https://github.com/tylerdotrar/SigmaPotato/releases/latest/download/SigmaPotato.exe -O /home/kali/transfers/SigmaPotato.exe 2>/dev/null || echo -e "${RED}[!] SigmaPotato download failed - manual download may be required${NC}"
 
+# Download Seatbelt
+echo -e "${YELLOW}[+] Downloading Seatbelt...${NC}"
+wget -q https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/raw/master/Seatbelt.exe -O /home/kali/transfers/Seatbelt.exe
+echo -e "${GREEN}[✓] Seatbelt downloaded${NC}"
+
+# Download SharpUp
+echo -e "${YELLOW}[+] Downloading SharpUp...${NC}"
+wget -q https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/raw/master/SharpUp.exe -O /home/kali/transfers/SharpUp.exe
+echo -e "${GREEN}[✓] SharpUp downloaded${NC}"
+
+# Download AccessChk (old version with /accepteula support)
+echo -e "${YELLOW}[+] Downloading AccessChk (old version with /accepteula)...${NC}"
+wget -q https://web.archive.org/web/20071007120748if_/http://download.sysinternals.com/Files/Accesschk.zip -O /tmp/accesschk-old.zip
+mkdir -p /tmp/accesschk-download
+unzip -q /tmp/accesschk-old.zip -d /tmp/accesschk-download
+mv /tmp/accesschk-download/accesschk.exe /home/kali/transfers/accesschk.exe 2>/dev/null || mv /tmp/accesschk-download/Accesschk.exe /home/kali/transfers/accesschk.exe
+rm -rf /tmp/accesschk-download /tmp/accesschk-old.zip
+echo -e "${GREEN}[✓] AccessChk (old) downloaded${NC}"
+
+# Download AccessChk (newer version)
+echo -e "${YELLOW}[+] Downloading AccessChk (newer version)...${NC}"
+wget -q https://download.sysinternals.com/files/AccessChk.zip -O /tmp/accesschk-new.zip
+mkdir -p /tmp/accesschk-new-download
+unzip -q /tmp/accesschk-new.zip -d /tmp/accesschk-new-download
+mv /tmp/accesschk-new-download/accesschk.exe /home/kali/transfers/accesschk-ng.exe 2>/dev/null || mv /tmp/accesschk-new-download/accesschk64.exe /home/kali/transfers/accesschk-ng.exe 2>/dev/null || echo -e "${YELLOW}[!] Could not find newer accesschk.exe${NC}"
+rm -rf /tmp/accesschk-new-download /tmp/accesschk-new.zip
+echo -e "${GREEN}[✓] AccessChk (newer) downloaded${NC}"
+
+# Download Plink
+echo -e "${YELLOW}[+] Downloading Plink...${NC}"
+wget -q https://the.earth.li/~sgtatham/putty/latest/w64/plink.exe -O /home/kali/transfers/plink.exe
+echo -e "${GREEN}[✓] Plink downloaded${NC}"
+
+# Download Chisel
+echo -e "${YELLOW}[+] Downloading Chisel...${NC}"
+CHISEL_VERSION=$(curl -s https://api.github.com/repos/jpillora/chisel/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+mkdir -p /tmp/chisel-download
+cd /tmp/chisel-download
+wget -q https://github.com/jpillora/chisel/releases/download/v${CHISEL_VERSION}/chisel_${CHISEL_VERSION}_linux_amd64.gz -O chisel-linux.gz
+wget -q https://github.com/jpillora/chisel/releases/download/v${CHISEL_VERSION}/chisel_${CHISEL_VERSION}_windows_amd64.gz -O chisel-windows.gz
+gunzip chisel-linux.gz
+gunzip chisel-windows.gz
+mv chisel-linux /home/kali/transfers/chisel
+mv chisel-windows /home/kali/transfers/chisel.exe
+chmod +x /home/kali/transfers/chisel
+cd /home/kali/transfers
+rm -rf /tmp/chisel-download
+echo -e "${GREEN}[✓] Chisel downloaded${NC}"
+
+# Download Linux Smart Enumeration (lse.sh)
+echo -e "${YELLOW}[+] Downloading Linux Smart Enumeration...${NC}"
+wget -q https://raw.githubusercontent.com/diego-treitos/linux-smart-enumeration/master/lse.sh -O /home/kali/transfers/lse.sh
+chmod +x /home/kali/transfers/lse.sh
+echo -e "${GREEN}[✓] Linux Smart Enumeration downloaded${NC}"
+
 echo -e "\n${GREEN}[✓] Setup complete!${NC}"
 echo -e "${GREEN}[*] All tools have been downloaded to /home/kali/transfers${NC}"
 
 # Cleanup any unnecessary files
 echo -e "${YELLOW}[*] Cleaning up unnecessary files...${NC}"
 cd /home/kali/transfers
-rm -f kiwi_passwords.yar mimicom.idl JuicyPotatoNG.zip 2>/dev/null || true
+rm -f kiwi_passwords.yar mimicom.idl JuicyPotatoNG.zip *.txt README* LICENSE* Eula.txt 2>/dev/null || true
 echo -e "${GREEN}[✓] Cleanup complete${NC}"
 
 echo -e "${YELLOW}[*] Remember to start neo4j before using BloodHound: sudo neo4j start${NC}"
