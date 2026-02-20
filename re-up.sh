@@ -9,51 +9,28 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# ASCII Art - Portrait of Dr. Gachet
-echo -e "${BLUE}"
-cat << "EOF"
-                    .:--==++****++==--:.                    
-                .-=+*##%%%%%%%%%%%%%%%%##*+=-.                
-             :=*#%%%%%%%%%%%%%%%%%%%%%%%%%%##*=:             
-          .=*#%%%%%##****+++++++++****##%%%%%%#*=.          
-        :+#%%%%#*+=-.                  .-=+*#%%%%#+:        
-      .+#%%%#*=.                            .=*#%%%#+.      
-     =%%%%#=.        ..::--==++==--:..         .=#%%%%=     
-   .+%%%#=       .-=+*##%%%%%%%%%%%%##*+-.       =*%%%+.   
-  .+%%%*:      :+#%%%%%#*+======+*#%%%%%%#+:      :*%%%+.  
-  +%%%*:     .+%%%%#=:.            .:=*%%%%#=.     :*%%%+  
- =%%%#:     .*%%%#:     .-+****+-.     :#%%%*.     :#%%%= 
-.#%%%.     .#%%%=     :*%%%%%%%%#*:     =%%%#.     .%%%#.
-=%%%+      +%%%=     =%%%#+=--=+#%%%=    .#%%%+      +%%%= 
-*%%#.     :%%%#     +%%%+.      .+%%%+    #%%%:     .#%%*
-#%%*      *%%#.    :%%%#   :==:   #%%%:   .#%%*      *%%#
-#%%+     .%%%+     +%%%:   +%%+   :%%%+    +%%%:     +%%#
-#%%=     :%%%:     *%%#.   =%%=   .#%%*    :%%%:     =%%#
-#%%=     :%%%:     +%%%:   :==:   :%%%+    :%%%:     =%%#
-*%%#.     *%%#.    .#%%%:        :%%%#.    #%%*     .#%%*
-=%%%+     .#%%%.    .*%%%+:    :+%%%*.    #%%%:     +%%%= 
-.#%%%.     =%%%#.    .+%%%%#**#%%%%+.    +%%%=     .%%%#.
- =%%%#:     +%%%#:     :+#%%%%%%#+:     :#%%%+     :#%%%= 
-  +%%%*:     =%%%%+.      .-==-.      .+%%%%=     :*%%%+  
-  .+%%%*:     :*%%%%*-.            .-*%%%%*:     :*%%%+.  
-   .+%%%#=      .=*%%%%#*+====++*#%%%%#=.      =*%%%+.   
-     =%%%%#=.      .-+#%%%%%%%%%#+=-.       .=#%%%%=     
-      .+#%%%#*=.         .....          .=*#%%%#+.      
-        :+#%%%%#*+=-.              .-=+*#%%%%#+:        
-          .=*#%%%%%##****++++++****##%%%%%#*=.          
-             :=*#%%%%%%%%%%%%%%%%%%%%%%%%%%*=:             
-                .-=+*##%%%%%%%%%%%%%%##*+=-.                
-                    .:--==++****++==--:.                    
-
-           Portrait of Dr. Gachet - Vincent van Gogh (1890)
-EOF
-echo -e "${NC}\n"
-
 echo -e "${GREEN}[*] Starting Kali Linux environment setup...${NC}\n"
 
-# Fix display resolution
-echo -e "${YELLOW}[+] Setting display to auto-size...${NC}"
+# Fix display resolution and make it persistent
+echo -e "${YELLOW}[+] Setting display to auto-size and making it persistent...${NC}"
 xrandr --output Virtual-1 --auto 2>/dev/null || echo -e "${YELLOW}[!] Display auto-size not available, skipping...${NC}"
+if ! grep -q "xrandr --output Virtual-1 --auto" ~/.profile 2>/dev/null; then
+    echo 'xrandr --output Virtual-1 --auto 2>/dev/null' >> ~/.profile
+fi
+echo -e "${GREEN}[✓] Display auto-resize configured${NC}"
+
+# Enable SSH
+echo -e "${YELLOW}[+] Enabling SSH service...${NC}"
+sudo systemctl enable ssh
+sudo systemctl start ssh
+echo -e "${GREEN}[✓] SSH enabled${NC}"
+
+# Set timezone and NTP
+echo -e "${YELLOW}[+] Configuring timezone and NTP...${NC}"
+sudo timedatectl set-timezone America/Los_Angeles
+sudo timedatectl set-ntp true
+sudo systemctl restart systemd-timesyncd
+echo -e "${GREEN}[✓] Timezone set to America/Los_Angeles and NTP enabled${NC}"
 
 # Create transfers directory
 echo -e "${YELLOW}[+] Creating /home/kali/transfers directory...${NC}"
@@ -69,6 +46,16 @@ sudo apt install -y seclists
 echo -e "${YELLOW}[+] Installing KeePass2...${NC}"
 sudo apt install -y keepass2
 echo -e "${GREEN}[✓] KeePass2 installed${NC}"
+
+# Install SNMP MIBs
+echo -e "${YELLOW}[+] Installing SNMP MIBs...${NC}"
+sudo apt install -y snmp-mibs-downloader
+sudo download-mibs
+
+# Configure SNMP to use MIBs
+echo -e "${YELLOW}[+] Configuring SNMP to enable MIBs...${NC}"
+sudo sed -i 's/^mibs :/#mibs :/' /etc/snmp/snmp.conf
+echo -e "${GREEN}[✓] SNMP MIBs enabled${NC}"
 
 # Unzip RockYou wordlist
 echo -e "${YELLOW}[+] Unzipping RockYou wordlist...${NC}"
@@ -115,12 +102,22 @@ fi
 
 echo -e "${GREEN}[✓] BloodHound setup complete${NC}"
 
-# Download PEASS-ng (WinPEASany & LinPEAS)
-echo -e "${YELLOW}[+] Downloading WinPEAS and LinPEAS...${NC}"
-wget -q https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEASany.exe -O /home/kali/transfers/winPEASany.exe
+# Copy WinPEASx64 from system location to transfers
+echo -e "${YELLOW}[+] Copying WinPEASx64 to transfers...${NC}"
+if [ -f /usr/share/peass/winpeas/winPEASx64.exe ]; then
+    cp /usr/share/peass/winpeas/winPEASx64.exe /home/kali/transfers/winPEASx64.exe
+    echo -e "${GREEN}[✓] WinPEASx64 copied${NC}"
+else
+    echo -e "${YELLOW}[!] WinPEASx64 not found in system, downloading...${NC}"
+    wget -q https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEASx64.exe -O /home/kali/transfers/winPEASx64.exe
+    echo -e "${GREEN}[✓] WinPEASx64 downloaded${NC}"
+fi
+
+# Download LinPEAS
+echo -e "${YELLOW}[+] Downloading LinPEAS...${NC}"
 wget -q https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh -O /home/kali/transfers/linpeas.sh
 chmod +x /home/kali/transfers/linpeas.sh
-echo -e "${GREEN}[✓] PEASS-ng tools downloaded${NC}"
+echo -e "${GREEN}[✓] LinPEAS downloaded${NC}"
 
 # Download PowerView
 echo -e "${YELLOW}[+] Downloading PowerView.ps1...${NC}"
@@ -184,6 +181,11 @@ echo -e "${YELLOW}[+] Downloading SharpUp...${NC}"
 wget -q https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/raw/master/SharpUp.exe -O /home/kali/transfers/SharpUp.exe
 echo -e "${GREEN}[✓] SharpUp downloaded${NC}"
 
+# Download SharpHound
+echo -e "${YELLOW}[+] Downloading SharpHound...${NC}"
+wget -q https://github.com/BloodHoundAD/BloodHound/raw/master/Collectors/SharpHound.exe -O /home/kali/transfers/SharpHound.exe
+echo -e "${GREEN}[✓] SharpHound downloaded${NC}"
+
 # Download AccessChk (old version with /accepteula support)
 echo -e "${YELLOW}[+] Downloading AccessChk (old version with /accepteula)...${NC}"
 wget -q https://web.archive.org/web/20071007120748if_/http://download.sysinternals.com/Files/Accesschk.zip -O /tmp/accesschk-old.zip
@@ -223,11 +225,43 @@ cd /home/kali/transfers
 rm -rf /tmp/chisel-download
 echo -e "${GREEN}[✓] Chisel downloaded${NC}"
 
+# Download pspy64 and pspy64s
+echo -e "${YELLOW}[+] Downloading pspy64 and pspy64s...${NC}"
+wget -q https://github.com/DominicBreuker/pspy/releases/latest/download/pspy64 -O /home/kali/transfers/pspy64
+wget -q https://github.com/DominicBreuker/pspy/releases/latest/download/pspy64s -O /home/kali/transfers/pspy64s
+chmod +x /home/kali/transfers/pspy64
+chmod +x /home/kali/transfers/pspy64s
+echo -e "${GREEN}[✓] pspy64 and pspy64s downloaded${NC}"
+
 # Download Linux Smart Enumeration (lse.sh)
 echo -e "${YELLOW}[+] Downloading Linux Smart Enumeration...${NC}"
 wget -q https://raw.githubusercontent.com/diego-treitos/linux-smart-enumeration/master/lse.sh -O /home/kali/transfers/lse.sh
 chmod +x /home/kali/transfers/lse.sh
 echo -e "${GREEN}[✓] Linux Smart Enumeration downloaded${NC}"
+
+# Add logging script to .zshrc
+echo -e "${YELLOW}[+] Adding terminal logging to .zshrc...${NC}"
+if ! grep -q "UNDER_SCRIPT" ~/.zshrc 2>/dev/null; then
+    cat >> ~/.zshrc << 'EOF'
+
+# Helper script by @sechurity
+# Create a log directory, a log file and start logging
+if [ -z "${UNDER_SCRIPT}" ]; then
+    logdir=${HOME}/logs
+    logfile=${logdir}/$(date +%F.%H-%M-%S).$$.log
+
+    mkdir -p ${logdir}
+    export UNDER_SCRIPT=${logfile}
+    echo "The terminal output is saving to $logfile"
+    script -f -q ${logfile}
+
+    exit
+fi
+EOF
+    echo -e "${GREEN}[✓] Terminal logging added to .zshrc${NC}"
+else
+    echo -e "${YELLOW}[!] Terminal logging already configured in .zshrc${NC}"
+fi
 
 echo -e "\n${GREEN}[✓] Setup complete!${NC}"
 echo -e "${GREEN}[*] All tools have been downloaded to /home/kali/transfers${NC}"
@@ -239,4 +273,6 @@ rm -f kiwi_passwords.yar mimicom.idl JuicyPotatoNG.zip *.txt README* LICENSE* Eu
 echo -e "${GREEN}[✓] Cleanup complete${NC}"
 
 echo -e "${YELLOW}[*] Remember to start neo4j before using BloodHound: sudo neo4j start${NC}"
-echo -e "${YELLOW}[*] Default neo4j credentials are neo4j:neo4j (you'll be prompted to change on first login)${NC}\n"
+echo -e "${YELLOW}[*] Default neo4j credentials are neo4j:neo4j (you'll be prompted to change on first login)${NC}"
+echo -e "${YELLOW}[*] BloodHound uses port 8080 by default - this may conflict with Ligolo${NC}"
+echo -e "${YELLOW}[*] Terminal logging is now enabled - logs saved to ~/logs/${NC}\n"
