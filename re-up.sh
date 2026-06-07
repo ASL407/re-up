@@ -88,9 +88,67 @@ cd /home/kali/transfers
 rm -rf /tmp/ligolo-download
 echo -e "${GREEN}[✓] Ligolo-ng downloaded${NC}"
 
-# Install BloodHound dependencies
-echo -e "${YELLOW}[+] Installing BloodHound and dependencies...${NC}"
-sudo apt install -y bloodhound neo4j
+# Install Docker Engine
+echo -e "${YELLOW}[+] Installing Docker Engine...${NC}"
+sudo apt install -y docker.io docker-compose
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker kali
+echo -e "${GREEN}[✓] Docker Engine installed${NC}"
+
+# Install BloodHound Community Edition via Docker
+echo -e "${YELLOW}[+] Installing BloodHound Community Edition (Docker)...${NC}"
+mkdir -p /home/kali/bloodhound
+cd /home/kali/bloodhound
+
+# Create docker-compose.yml for BloodHound
+cat > docker-compose.yml << 'DOCKEREOF'
+version: '3.8'
+services:
+  bloodhound:
+    image: specterops/bloodhound:latest
+    container_name: bloodhound
+    environment:
+      - bhe_admin_user=admin
+      - bhe_admin_password=BloodHoundCommunity123!
+    ports:
+      - "8080:8080"
+    volumes:
+      - bloodhound-data:/data
+    restart: unless-stopped
+
+volumes:
+  bloodhound-data:
+DOCKEREOF
+
+# Start BloodHound via docker-compose
+echo -e "${YELLOW}[*] Starting BloodHound containers...${NC}"
+cd /home/kali/bloodhound
+sudo docker-compose up -d
+
+echo -e "${GREEN}[✓] BloodHound Community Edition installed${NC}"
+
+# Store BloodHound credentials for later reference
+mkdir -p /home/kali
+cat > /home/kali/bloodhound_credentials.txt << 'CREDSEOF'
+BloodHound Community Edition Credentials:
+===========================================
+URL: http://localhost:8080
+Username: admin
+Password: BloodHoundCommunity123!
+
+Note: Access BloodHound in your browser at http://localhost:8080
+You will be prompted to change the default password on first login.
+
+To view container status:
+docker-compose ps
+
+To view logs:
+docker-compose logs -f
+
+To stop BloodHound:
+docker-compose down
+CREDSEOF
 
 # Install bloodhound-python
 echo -e "${YELLOW}[+] Installing bloodhound-python...${NC}"
