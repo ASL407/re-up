@@ -244,6 +244,16 @@ echo -e "${YELLOW}[+] Downloading SharpHound...${NC}"
 wget -q https://github.com/BloodHoundAD/BloodHound/raw/master/Collectors/SharpHound.exe -O /home/kali/transfers/SharpHound.exe
 echo -e "${GREEN}[✓] SharpHound downloaded${NC}"
 
+# Download SharpGPOAbuse
+echo -e "${YELLOW}[+] Downloading SharpGPOAbuse...${NC}"
+mkdir -p /tmp/sharpgpoabuse-download
+cd /tmp/sharpgpoabuse-download
+wget -q https://github.com/byronkg/SharpGPOAbuse/raw/main/SharpGPOAbuse-master/SharpGPOAbuse/bin/Release/SharpGPOAbuse.exe -O SharpGPOAbuse.exe
+mv SharpGPOAbuse.exe /home/kali/transfers/SharpGPOAbuse.exe
+cd /home/kali/transfers
+rm -rf /tmp/sharpgpoabuse-download
+echo -e "${GREEN}[✓] SharpGPOAbuse downloaded${NC}"
+
 # Download AccessChk (old version with /accepteula support)
 echo -e "${YELLOW}[+] Downloading AccessChk (old version with /accepteula)...${NC}"
 wget -q https://web.archive.org/web/20071007120748if_/http://download.sysinternals.com/Files/Accesschk.zip -O /tmp/accesschk-old.zip
