@@ -239,6 +239,11 @@ echo -e "${YELLOW}[+] Downloading SharpUp...${NC}"
 wget -q https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/raw/master/SharpUp.exe -O /home/kali/transfers/SharpUp.exe
 echo -e "${GREEN}[✓] SharpUp downloaded${NC}"
 
+# Download Rubeus
+echo -e "${YELLOW}[+] Downloading Rubeus...${NC}"
+wget -q https://github.com/r3motecontrol/Ghostpack-CompiledBinaries/raw/master/Rubeus.exe -O /home/kali/transfers/Rubeus.exe
+echo -e "${GREEN}[✓] Rubeus downloaded${NC}"
+
 # Download SharpHound
 echo -e "${YELLOW}[+] Downloading SharpHound...${NC}"
 wget -q https://github.com/BloodHoundAD/BloodHound/raw/master/Collectors/SharpHound.exe -O /home/kali/transfers/SharpHound.exe
